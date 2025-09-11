@@ -1,0 +1,14 @@
+{
+  "name": "02a_web_protocols",
+  "version": "1.0.0",
+  "description": "basic web protocols",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Joe Schmoe",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
