@@ -2,9 +2,13 @@ const express = require('express');
 const app = express();
 const port = 9001;
 
+const cookieParser = require('cookie-parser');
+
 app.use(express.static('www'));
 
+// middleware
 app.use(express.urlencoded({extended: false}));
+app.use(cookieParser());
 
 app.get('/', (request, response) => {
 	response.send(`
@@ -21,8 +25,36 @@ app.get('/', (request, response) => {
 		`);
 });
 
+app.get('/home', (request, response) => {
+  response.cookie('session-id', '1');
+  response.redirect('/');
+});
+
+app.get('/cookie-peek', (request, response) => {
+  console.log(request.cookies['session-id']);
+
+	response.send('ok');
+});
+
+app.get('/logout', (request, response) => {
+  response.clearCookie('session-id');
+});
+
 app.post('/form_submit', (request, response) => {
 	console.log(request.body);
+
+	response.send('ok');
+});
+
+// http://localhost:9001/form_submit?username=randy&password=gidget
+app.get('/form_submit', (request, response) => {
+	console.log(request.query);
+
+	response.send('ok');
+});
+
+app.get('/products/:prodid', (request, response) => {
+	console.log(request.params);
 
 	response.send('ok');
 });
