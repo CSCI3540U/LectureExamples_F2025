@@ -25,6 +25,11 @@ app.get('/', (request, response) => {
 		`);
 });
 
+```
+GET / HTTP/1.1
+Host: localhost
+```
+
 app.get('/home', (request, response) => {
   response.cookie('session-id', '1');
   response.redirect('/');
