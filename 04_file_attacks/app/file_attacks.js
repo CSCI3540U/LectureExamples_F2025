@@ -13,6 +13,25 @@ app.get('/open_redirect', (request, response) => {
     response.redirect(url);
 });
 
+app.get('/local_file_inclusion', (request, response) => {
+    let filename = request.query['page'];
+    response.setHeader('Content-Type', 'text/html');
+    response.sendFile(__dirname + `/static/${filename}.html`);
+});
+
+app.get('/directory_traversal', (request, response) => {
+    let filename = request.query['page'];
+    let pathname = __dirname + '/' + filename;
+    response.setHeader('Content-Type', 'text/html');
+    fs.readFile(pathname, (error, data) => {
+        if (error) {
+            console.error(error);
+            return;
+        }
+        response.send(data);
+    });    
+});
+
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
