@@ -4,9 +4,19 @@ const port = 9001;
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const fileUpload = require('express-fileupload');
+const process = require('child_process');
 
 app.use(express.static('static'));
 app.use(express.urlencoded({ extended: false }));
+app.use(fileUpload({
+    limits: { fileSize: 25 * 1024 * 1024 },
+    abortOnLimit: true,
+    useTempFiles: true,
+    tempFileDir: '/tmp/',
+    safeFileNames: true,
+    preserveExtension: true,
+}));
 
 app.get('/open_redirect', (request, response) => {
     let url = request.query['page'];
@@ -23,13 +33,50 @@ app.get('/directory_traversal', (request, response) => {
     let filename = request.query['page'];
     let pathname = __dirname + '/' + filename;
     response.setHeader('Content-Type', 'text/html');
-    fs.readFile(pathname, (error, data) => {
+    fs.realpath(pathname, (error, resolved_path) => {
         if (error) {
-            console.error(error);
-            return;
+            console.log(error);
+        } else {
+            // check if the path is /var/www/app/
+            // if (resolved_path.startsWith('/var/www/app')) {
+            if (resolved_path.startsWith(__dirname + '/')) {
+                    fs.readFile(pathname, (error, data) => {
+                    if (error) {
+                        console.error(error);
+                        return;
+                    }
+                    response.send(data);
+                });                
+            } else {
+                // trying to access outside of the container directory
+                response.send(`You cannot access files outside of ${__dirname}`)
+            }
         }
-        response.send(data);
-    });    
+    });
+});
+
+app.get('/remote_file_inclusion', async (request, response) => {
+    let url = request.query['page'];
+    try {
+        let pageResponse = await axios.get(url);
+        response.send(pageResponse.data);
+    } catch (error) {
+        response.status(500).send(`Error: ${error.message}`);
+    }
+});
+
+app.post('/file_upload', (request, response) => {
+    const file = request.files.uploaded_image;
+    let desired_file_path = path.join(path.join(__dirname, 'uploads'), file.name);
+    file.mv(desired_file_path, (error) => {
+        if (error) {
+            console.error(`Error copying file: ${error}`);
+        } else {
+            response.statusCode = 200;
+            response.setHeader('Content-Type','text/html');
+            response.write(``); // you are here
+        }
+    });
 });
 
 app.listen(port, () => {
