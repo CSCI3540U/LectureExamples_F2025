@@ -6,6 +6,8 @@ const path = require('path');
 const axios = require('axios');
 const fileUpload = require('express-fileupload');
 const process = require('child_process');
+const util = require('util');
+const exec = util.promisify(process.exec);
 
 app.use(express.static('static'));
 app.use(express.urlencoded({ extended: false }));
@@ -65,18 +67,35 @@ app.get('/remote_file_inclusion', async (request, response) => {
     }
 });
 
-app.post('/file_upload', (request, response) => {
+app.post('/file_upload', async (request, response) => {
     const file = request.files.uploaded_image;
     let desired_file_path = path.join(path.join(__dirname, 'uploads'), file.name);
-    file.mv(desired_file_path, (error) => {
-        if (error) {
-            console.error(`Error copying file: ${error}`);
-        } else {
-            response.statusCode = 200;
-            response.setHeader('Content-Type','text/html');
-            response.write(``); // you are here
+    if (file.name.endsWith('.jpg') && (file.mimetype === 'image/jpeg')) {
+        const cmd = await exec(`/usr/bin/file "${file.tempFilePath}"`);
+        if (cmd.stderr) {
+            console.error(`Error while checking file type: ${cmd.stderr}`);
+            response.write(`Error while checking file type: ${cmd.stderr}`);
+            response.end();
+            return;
         }
-    });
+        if (cmd.stdout.includes('JPEG')) {
+            file.mv(desired_file_path, (error) => {
+                if (error) {
+                    console.error(`Error copying file: ${error}`);
+                } else {
+                    response.statusCode = 200;
+                    response.setHeader('Content-Type','text/html');
+                    response.write(`File name: ${file.name}`);
+                    response.write(`File size: ${file.size}`);
+                    response.write(`File hash: ${file.md5}`);
+                    response.write(`MIME type: ${file.mimetype}`);
+                    response.write(`Temp path: ${file.tempFilePath}`);
+                    response.write(`Dest path: ${desired_file_path}`);
+                    response.end();
+                }
+            });
+        }
+    }
 });
 
 app.listen(port, () => {
