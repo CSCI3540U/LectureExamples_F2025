@@ -20,6 +20,10 @@ function checkPassword(email, password) {
     return loginData[email] === password;
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // session tracking
 
 let nextSessionId = 2;
@@ -75,32 +79,36 @@ app.post('/login', (request, response) => {
     let password = request.body.password;
     console.log(`Login attempt: ${request.body.email}/${request.body.password}`);
 
-    if (userExists(email)) {
-        console.log(` User exists: ${email}`);
-        if (checkPassword(email, password)) {
-            // login success
-            response.cookie('session_id', `${nextSessionId}`);
-            sessionData[nextSessionId] = {
-                email: email,
-                role: 'user'
-            };
-            nextSessionId++;
+    // fix 1: delay
+    sleep(500).then(() => {
+        if (userExists(email)) {
+            console.log(` User exists: ${email}`);
+            if (checkPassword(email, password)) {
+                // login success
+                response.cookie('session_id', `${nextSessionId}`);
+                sessionData[nextSessionId] = {
+                    email: email,
+                    role: 'user'
+                };
+                nextSessionId++;
 
-            response.redirect('/home');
+                response.redirect('/home');
+            } else {
+                // password does not match
+                // fix 2: consistent error messages
+                response.status(401).render('login', {
+                    title: 'Login Page',
+                    errorMessage: 'Login incorrect'
+                });
+            }
         } else {
-            // password does not match
+            // e-mail does not exist
             response.status(401).render('login', {
                 title: 'Login Page',
-                errorMessage: 'Password is incorrect'
+                errorMessage: 'Login incorrect'
             });
         }
-    } else {
-        // e-mail does not exist
-        response.status(401).render('login', {
-            title: 'Login Page',
-            errorMessage: 'E-Mail does not exist'
-        });
-    }
+    });
 });
 
 app.get('/logout', (request, response) => {
