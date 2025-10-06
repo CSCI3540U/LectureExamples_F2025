@@ -77,7 +77,7 @@ app.get('/login', (request, response) => {
 app.post('/login', (request, response) => {
     let email = request.body.email;
     let password = request.body.password;
-    console.log(`Login attempt: ${request.body.email}/${request.body.password}`);
+    // console.log(`Login attempt: ${request.body.email}/${request.body.password}`);
 
     // fix 1: delay
     sleep(500).then(() => {
@@ -92,7 +92,7 @@ app.post('/login', (request, response) => {
                 };
                 nextSessionId++;
 
-                response.redirect('/home');
+                response.redirect('/');
             } else {
                 // password does not match
                 // fix 2: consistent error messages
@@ -114,6 +114,23 @@ app.post('/login', (request, response) => {
 app.get('/logout', (request, response) => {
     request.session.email = '';
     response.redirect('/login');
+});
+
+app.get('/profile/:email', (request, response) => {
+    let email = request.params.email; // unused
+    let sessionId = request.cookies['session_id'];
+    let userEmail = sessionData[sessionId]['email'];
+    let role = sessionData[sessionId]['role'];
+    if (email in loginData && (role === 'administrator' || userEmail === email)) {
+        response.send(`Ciao, ${email}.  Your password is ${loginData[email]}.`);
+    } else {
+        response.status(400).send('Access denied.');
+    }
+});
+
+app.get('/order_status', (request, response) => {
+    let orderId = request.query.order_id;
+    response.send(`Viewing order ${orderId}.`);
 });
 
 // web listener
