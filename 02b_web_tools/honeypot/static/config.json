@@ -1,0 +1,5 @@
+{ 
+    "databaseurl": "10.0.0.1",
+    "username": "sqluser",
+    "password": "abc123"
+}
