@@ -35,7 +35,9 @@ app.get('/login', (request, response) => {
 
 app.post('/login', async (request, response) => {
     console.log(`request.body: ${request.body}`);
-    const { email, password } = request.body;
+    // const { email, password } = request.body;
+    const email = String(request.body.email);
+    const password = String(request.body.password);
 
     const query = { email, password };
 
