@@ -3,7 +3,6 @@ const app = express();
 const port = 9000;
 const mongoose = require('mongoose');
 const db_url = require('./db_creds');
-console.log(`db_url = ${JSON.stringify(db_url)}`);
 
 async function main() {
     await mongoose.connect(db_url);
